@@ -18,8 +18,8 @@ MAX_CONCURRENT_TASKS = 10
 class RichHideMyEmail(HideMyEmail):
     _cookie_file = "cookie.txt"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, label:Optional[str], notes: Optional[str]):
+        super().__init__(label=label, notes=notes)
         self.console = Console()
         self.table = Table()
 
@@ -170,19 +170,19 @@ class RichHideMyEmail(HideMyEmail):
         self.console.print(self.table)
 
 
-async def generate(count: Optional[int]) -> None:
-    async with RichHideMyEmail() as hme:
+async def generate(count: Optional[int], label:Optional[str], notes: Optional[str]) -> None:
+    async with RichHideMyEmail(label, notes) as hme:
         await hme.generate(count)
 
 
-async def list(active: bool, search: str) -> None:
-    async with RichHideMyEmail() as hme:
+async def list(active: bool, search: str, label: Optional[str], notes: Optional[str]) -> None:
+    async with RichHideMyEmail(label, notes) as hme:
         await hme.list(active, search)
 
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     try:
-        loop.run_until_complete(generate(None))
+        loop.run_until_complete(generate(None, None, None))
     except KeyboardInterrupt:
         pass
