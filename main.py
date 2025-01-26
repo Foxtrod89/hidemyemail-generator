@@ -138,6 +138,7 @@ class RichHideMyEmail(HideMyEmail):
             return
 
         self.table.add_column("Label")
+        self.table.add_column("Notes")
         self.table.add_column("Hide my email")
         self.table.add_column("Created Date Time")
         self.table.add_column("IsActive")
@@ -147,6 +148,7 @@ class RichHideMyEmail(HideMyEmail):
                 if search is not None and re.search(search, row["label"]):
                     self.table.add_row(
                         row["label"],
+                        row["note"],
                         row["hme"],
                         str(
                             datetime.datetime.fromtimestamp(
@@ -158,7 +160,8 @@ class RichHideMyEmail(HideMyEmail):
                 else:
                     self.table.add_row(
                         row["label"],
-                        row["hme"],
+                        row["note"],
+                        row["hme"], 
                         str(
                             datetime.datetime.fromtimestamp(
                                 row["createTimestamp"] / 1000
