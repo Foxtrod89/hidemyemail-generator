@@ -3,11 +3,11 @@ import datetime
 import os
 from typing import Union, List, Optional
 import re
-
 from rich.text import Text
 from rich.prompt import IntPrompt
 from rich.console import Console
 from rich.table import Table
+from rich.box import MINIMAL_HEAVY_HEAD
 
 from icloud import HideMyEmail
 
@@ -21,7 +21,9 @@ class RichHideMyEmail(HideMyEmail):
     def __init__(self, label:Optional[str], notes: Optional[str]):
         super().__init__(label=label, notes=notes)
         self.console = Console()
-        self.table = Table()
+        self.table = Table(box=MINIMAL_HEAVY_HEAD,
+                           padding=(0,0,1,0), # top, right, bottom, and left borders
+                        )
 
         if os.path.exists(self._cookie_file):
             # load in a cookie string from file
@@ -137,9 +139,9 @@ class RichHideMyEmail(HideMyEmail):
             )
             return
 
-        self.table.add_column("Label")
+        self.table.add_column("Label", no_wrap=True)
         self.table.add_column("Notes")
-        self.table.add_column("Hide my email")
+        self.table.add_column("Hide my email", no_wrap=True)
         self.table.add_column("Created Date Time")
         self.table.add_column("IsActive")
 
