@@ -8,10 +8,11 @@ from rich.prompt import IntPrompt
 from rich.console import Console
 from rich.table import Table
 from rich.box import MINIMAL_HEAVY_HEAD
-
+from rookiepy import safari, chrome, firefox
 from icloud import HideMyEmail
+import logging
 
-
+logging.basicConfig(level=logging.INFO)
 MAX_CONCURRENT_TASKS = 10
 
 
@@ -176,6 +177,34 @@ async def generate(count: Optional[int], label:Optional[str], notes: Optional[st
 async def list(active: bool, search: str, label: Optional[str], notes: Optional[str]) -> None:
     async with RichHideMyEmail(label, notes) as hme:
         await hme.list(active, search)
+
+
+def _get_cookies_from_browser(browser: str, domain: str) -> List[dict]:
+    browser_map = {"safari": safari,
+                   "chrome":chrome,
+                   "firefox":firefox,
+                    }
+    browser_selected = browser_map.get(browser)
+    if not browser_selected:
+        raise Exception(f"Browser {browser}' not supported!")
+    try: 
+        cookies = browser_selected([domain])
+        return cookies    
+    except RuntimeError:
+        print(f"Unable to fetch cookies from browser {browser}!")
+        exit(1)
+        
+def _cookies_formatter(cookies: List[dict]) -> str:
+    raw_cookie_string = ""
+    for cookie in cookies:
+        if cookie['name'].startswith('X-APPLE') or cookie['name'].startswith('X_APPLE'):
+            raw_cookie_string += f"{cookie['name']}={cookie['value']};"
+    return raw_cookie_string
+
+def cookie_writer(browser: str) -> None:
+    with open('cookie.txt', 'w') as fo:
+        fo.write(_cookies_formatter(_get_cookies_from_browser(browser,'.icloud.com')))
+        logging.info(f"Cookies successfully written to cookie.txt for {browser}.")
 
 
 if __name__ == "__main__":

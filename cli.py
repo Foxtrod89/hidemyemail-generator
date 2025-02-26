@@ -5,6 +5,7 @@ import click
 
 from main import generate
 from main import list
+from main import cookie_writer
 
 @click.group()
 def cli():
@@ -28,7 +29,7 @@ def generatecommand(count: int, label:str, notes: str):
 @click.option(
     "--active/--inactive", default=True, help="Filter Active / Inactive emails"
 )
-@click.option("--search", default=None, help="Search emails")
+@click.option("--search", default=None, help="Search emails by label")
 def listcommand(active, search):
     "List emails"
     loop = asyncio.new_event_loop()
@@ -37,8 +38,20 @@ def listcommand(active, search):
     except KeyboardInterrupt:
         pass
 
+@click.command()
+@click.option(
+                "--browser",
+                default='safari', 
+                required = False, 
+                type=click.Choice(['chrome','safari','firefox'],
+                case_sensitive=False))
+def extract_cookies(browser: str):
+    "To extract cookies from browser(Chrome, Safari and Firefox)"
+    cookie_writer(browser)
+
 cli.add_command(listcommand, name="list")
 cli.add_command(generatecommand, name="generate")
+cli.add_command(extract_cookies, name="extract")
 
 if __name__ == "__main__":
     cli()
