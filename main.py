@@ -26,14 +26,15 @@ class RichHideMyEmail(HideMyEmail):
                            padding=(0,0,1,0), # top, right, bottom, and left borders
                         )
 
-        if os.path.exists(self._cookie_file):
+        if os.path.exists(self._cookie_file) and os.path.getsize(self._cookie_file) > 1:
             # load in a cookie string from file
             with open(self._cookie_file, "r") as f:
                 self.cookies = [line for line in f if not line.startswith("//")][0]
         else:
             self.console.log(
-                '[bold yellow][WARN][/] No "cookie.txt" file found! Generation might not work due to unauthorized access.'
+                '[bold yellow][WARN][/] No "cookie.txt" file found OR file maybe empty! Generation will not work due to unauthorized access'
             )
+            exit(1)
 
     async def _generate_one(self) -> Union[str, None]:
         # First, generate an email
@@ -167,17 +168,70 @@ class RichHideMyEmail(HideMyEmail):
                     )
 
         self.console.print(self.table)
+    
+    async def _get_anonymousid(self, hme:str) -> Union[str, None]:
+        # anonymousid needed as payload for /v1/hme/delete endpoint
+        gen_res = await self.list_email()
+        if not gen_res:
+            return
+        elif "success" not in gen_res or not gen_res["success"]:
+            error = gen_res["error"] if "error" in gen_res else {}
+            err_msg = "Unknown"
+            if type(error) == int and "reason" in gen_res:
+                err_msg = gen_res["reason"]
+            elif type(error) == dict and "errorMessage" in error:
+                err_msg = error["errorMessage"]
+            self.console.log(
+                f"[bold red][ERR][/] - Failed to generate email. Reason: {err_msg}"
+            )
+            return
+        try:
+            for row in gen_res["result"]["hmeEmails"]:
+                if row.get('hme') == hme:
+                    return row.get('anonymousId')
+            #self.console.log(f"[bold red][ERR][/] - No matching email found for {hme}")
+            self.console.log(
+                             f"[bold red][ERR][/] - No [italic][green]anonymousId[/][/] "
+                             f"found for [italic][green]{hme}[/][/], "
+                             f"make sure email exist!"
+                             )
+            return None
+        except KeyError as e:
+            self.console.log(f"[bold red][ERR][/] - KeyError: {str(e)}.")
+        return None
 
+    async def delete(self, hme:str) -> None:
+        anonymousId = await self._get_anonymousid(hme)
+        if anonymousId is not None:            
+            gen_res = await self.delete_email(anonymousId)
+            if not gen_res:
+                return
+            elif "success" not in gen_res or not gen_res["success"]:
+                error = gen_res["error"] if "error" in gen_res else {}
+                err_msg = "Unknown"
+                if type(error) == int and "reason" in gen_res:
+                    err_msg = gen_res["reason"]
+                elif type(error) == dict and "errorMessage" in error:
+                    err_msg = error["errorMessage"]
+                    self.console.log(
+                    f"[bold red][ERR][/] - Failed to delete email. Reason: {err_msg}"
+                    )
+                return
+            self.console.log(f"Email: [bright_blue]{hme}[/] was successfully deleted")
+        else:
+            return
 
 async def generate(count: Optional[int], label:Optional[str], notes: Optional[str]) -> None:
     async with RichHideMyEmail(label, notes) as hme:
         await hme.generate(count)
 
-
 async def list(active: bool, search: str, label: Optional[str], notes: Optional[str]) -> None:
     async with RichHideMyEmail(label, notes) as hme:
         await hme.list(active, search)
 
+async def delete(email: str) -> None:
+    async with RichHideMyEmail("","") as hme:
+        await hme.delete(email)
 
 def _get_cookies_from_browser(browser: str, domain: str) -> List[dict]:
     browser_map = {"safari": safari,

@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 import ssl
 import certifi
-from typing import Optional
+from typing import Callable, Optional, Union
 
 
 class HideMyEmail:
@@ -102,6 +102,19 @@ class HideMyEmail:
         """List all HME"""
         try:
             async with self.s.get(f"{self.base_url_v2}/list", params=self.params) as resp:
+                res = await resp.json()
+                return res
+        except asyncio.TimeoutError:
+            return {"error": 1, "reason": "Request timed out"}
+        except Exception as e:
+            return {"error": 1, "reason": str(e)}
+    
+    
+    async def delete_email(self, anonymousId: str) -> dict:
+        """Delete email"""
+        try:
+            async with self.s.post(
+                f"{self.base_url_v1}/delete", params=self.params, json={"anonymousId": anonymousId}) as resp:
                 res = await resp.json()
                 return res
         except asyncio.TimeoutError:
