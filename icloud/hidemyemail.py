@@ -122,3 +122,29 @@ class HideMyEmail:
         except Exception as e:
             return {"error": 1, "reason": str(e)}
 
+    async def deactivate_email(self, anonymousId: str) -> dict:
+        """Deactivate emails for forwarding"""
+        try:
+            async with self.s.post(
+                f"{self.base_url_v1}/deactivate", params=self.params, json={"anonymousId": anonymousId}) as resp:
+                res = await resp.json()
+                return res
+        except asyncio.TimeoutError:
+            return {"error": 1, "reason": "Request timed out"}
+        except Exception as e:
+            return {"error": 1, "reason": str(e)}
+
+    async def reactivate_email(self, anonymousId: str) -> dict:
+        """Reactivate emails for forwarding"""
+        try:
+            async with self.s.post(
+                f"{self.base_url_v1}/reactivate", params=self.params, json={"anonymousId": anonymousId}) as resp:
+                res = await resp.json()
+                return res
+        except asyncio.TimeoutError:
+            return {"error": 1, "reason": "Request timed out"}
+        except Exception as e:
+            return {"error": 1, "reason": str(e)}
+
+
+

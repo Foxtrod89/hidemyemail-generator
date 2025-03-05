@@ -221,6 +221,49 @@ class RichHideMyEmail(HideMyEmail):
         else:
             return
 
+    async def deactive(self, hme:str) -> None:
+        anonymousId = await self._get_anonymousid(hme)
+        if anonymousId is not None:            
+            gen_res = await self.deactivate_email(anonymousId)
+            if not gen_res:
+                return
+            elif "success" not in gen_res or not gen_res["success"]:
+                error = gen_res["error"] if "error" in gen_res else {}
+                err_msg = "Unknown"
+                if type(error) == int and "reason" in gen_res:
+                    err_msg = gen_res["reason"]
+                elif type(error) == dict and "errorMessage" in error:
+                    err_msg = error["errorMessage"]
+                    self.console.log(
+                    f"[bold red][ERR][/] - Failed to deactivate email. Reason: {err_msg}"
+                    )
+                return
+            self.console.log(f"Email: [italic][bright_blue]{hme}[/][/] disabled for forwarding!")
+        else:
+            return
+    
+    async def reactive(self, hme:str) -> None:
+        anonymousId = await self._get_anonymousid(hme)
+        if anonymousId is not None:            
+            gen_res = await self.reactivate_email(anonymousId)
+            if not gen_res:
+                return
+            elif "success" not in gen_res or not gen_res["success"]:
+                error = gen_res["error"] if "error" in gen_res else {}
+                err_msg = "Unknown"
+                if type(error) == int and "reason" in gen_res:
+                    err_msg = gen_res["reason"]
+                elif type(error) == dict and "errorMessage" in error:
+                    err_msg = error["errorMessage"]
+                    self.console.log(
+                    f"[bold red][ERR][/] - Failed to reactivate email. Reason: {err_msg}"
+                    )
+                return
+            self.console.log(f"Email: [italic][bright_blue]{hme}[/][/] enabled for forwarding!")
+        else:
+            return
+
+
 async def generate(count: Optional[int], label:Optional[str], notes: Optional[str]) -> None:
     async with RichHideMyEmail(label, notes) as hme:
         await hme.generate(count)
@@ -232,6 +275,14 @@ async def list(active: bool, search: str, label: Optional[str], notes: Optional[
 async def delete(email: str) -> None:
     async with RichHideMyEmail("","") as hme:
         await hme.delete(email)
+
+async def deactivate(email: str) -> None:
+    async with RichHideMyEmail("","") as hme:
+        await hme.deactive(email)
+
+async def reactivate(email: str) -> None:
+    async with RichHideMyEmail("","") as hme:
+        await hme.reactive(email)
 
 def _get_cookies_from_browser(browser: str, domain: str) -> List[dict]:
     browser_map = {"safari": safari,

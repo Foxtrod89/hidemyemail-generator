@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import click
-from main import generate, list, delete, cookie_writer
+from main import generate, list, delete, deactivate, reactivate, cookie_writer
 
 @click.group()
 def cli():
@@ -43,6 +43,28 @@ def deletecommand(email: str):
         pass
 
 @click.command()
+@click.argument("email")
+def deactivatecommand(email: str):
+    "Deactivate emails"
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(deactivate(email))
+    except KeyboardInterrupt:
+        pass
+
+@click.command()
+@click.argument("email")
+def reactivatecommand(email: str):
+    "Reactivate emails"
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(reactivate(email))
+    except KeyboardInterrupt:
+        pass
+
+
+
+@click.command()
 @click.option(
                 "--browser",
                 default='safari', 
@@ -56,6 +78,8 @@ def extract_cookies(browser: str):
 cli.add_command(listcommand, name="list")
 cli.add_command(generatecommand, name="generate")
 cli.add_command(deletecommand, name = "delete")
+cli.add_command(deactivatecommand, name = "deactivate")
+cli.add_command(reactivatecommand, name = "reactivate")
 cli.add_command(extract_cookies, name="extract")
 
 if __name__ == "__main__":
