@@ -33,34 +33,58 @@ def listcommand(active, search):
         pass
 
 @click.command()
-@click.argument("email")
-def deletecommand(email: str):
+@click.argument("emails", nargs=-1)
+@click.option('--file', type=click.File('r'), help="to delete emails from file")
+def deletecommand(emails, file):
     "Remove emails"
-    loop = asyncio.new_event_loop()
-    try:
-        loop.run_until_complete(delete(email))
-    except KeyboardInterrupt:
-        pass
+    if emails:
+        try:
+            asyncio.run(delete(emails))
+        except KeyboardInterrupt:
+            pass
+    elif file:
+        try:
+           asyncio.run(delete(file))
+        except KeyboardInterrupt:
+            pass
+    else:
+        click.echo('No emails provided.')
 
 @click.command()
-@click.argument("email")
-def deactivatecommand(email: str):
+@click.argument("emails", nargs=-1)
+@click.option('--file', type=click.File('r'), help="to deactivate emails from file")
+def deactivatecommand(emails, file):
     "Deactivate emails"
-    loop = asyncio.new_event_loop()
-    try:
-        loop.run_until_complete(deactivate(email))
-    except KeyboardInterrupt:
-        pass
+    if emails:
+        try:
+            asyncio.run(deactivate(emails))
+        except KeyboardInterrupt:
+            pass
+    elif file:
+        try:
+           asyncio.run(deactivate(file))
+        except KeyboardInterrupt:
+            pass
+    else:
+        click.echo('No emails provided.')
 
 @click.command()
-@click.argument("email")
-def reactivatecommand(email: str):
+@click.argument("emails", nargs=-1)
+@click.option('--file', type=click.File('r'), help="to reactivate emails from file")
+def reactivatecommand(emails, file):
     "Reactivate emails"
-    loop = asyncio.new_event_loop()
-    try:
-        loop.run_until_complete(reactivate(email))
-    except KeyboardInterrupt:
-        pass
+    if emails:
+        try:
+            asyncio.run(reactivate(emails))
+        except KeyboardInterrupt:
+            pass
+    elif file:
+        try:
+           asyncio.run(reactivate(file))
+        except KeyboardInterrupt:
+            pass
+    else:
+        click.echo('No emails provided.')
 
 
 

@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import os
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Iterator
 import re
 from rich.text import Text
 from rich.prompt import IntPrompt
@@ -77,7 +77,7 @@ class RichHideMyEmail(HideMyEmail):
         self.console.log(f'[100%] "{email}" - Successfully reserved')
         return email
 
-    async def _generate(self, num: int):
+    async def _generate(self, num: int) -> Iterator[str]:
         tasks = []
         for _ in range(num):
             task = asyncio.ensure_future(self._generate_one())
@@ -170,7 +170,7 @@ class RichHideMyEmail(HideMyEmail):
         self.console.print(self.table)
     
     async def _get_anonymousid(self, hme:str) -> Union[str, None]:
-        # anonymousid needed as payload for /v1/hme/delete endpoint
+        # anonymousid needed as payload for delete, deactivate, reactivate endpoints
         gen_res = await self.list_email()
         if not gen_res:
             return
@@ -189,7 +189,6 @@ class RichHideMyEmail(HideMyEmail):
             for row in gen_res["result"]["hmeEmails"]:
                 if row.get('hme') == hme:
                     return row.get('anonymousId')
-            #self.console.log(f"[bold red][ERR][/] - No matching email found for {hme}")
             self.console.log(
                              f"[bold red][ERR][/] - No [italic][green]anonymousId[/][/] "
                              f"found for [italic][green]{hme}[/][/], "
@@ -199,8 +198,9 @@ class RichHideMyEmail(HideMyEmail):
         except KeyError as e:
             self.console.log(f"[bold red][ERR][/] - KeyError: {str(e)}.")
         return None
-
-    async def delete(self, hme:str) -> None:
+     
+    async def _delete_one(self, hme:str) -> None:
+        hme = hme.strip()
         anonymousId = await self._get_anonymousid(hme)
         if anonymousId is not None:            
             gen_res = await self.delete_email(anonymousId)
@@ -214,14 +214,24 @@ class RichHideMyEmail(HideMyEmail):
                 elif type(error) == dict and "errorMessage" in error:
                     err_msg = error["errorMessage"]
                     self.console.log(
-                    f"[bold red][ERR][/] - Failed to delete email. Reason: {err_msg}"
+                    f"[bold red][ERR][/]"
+                    f"- Failed to delete email [italic][red]{hme}[/][/]. "
+                    f"Reason: {err_msg}"
                     )
                 return
-            self.console.log(f"Email: [bright_blue]{hme}[/] was successfully deleted")
+            self.console.log(f"Email: [italic][bright_blue]{hme}[/][/] was successfully deleted")
         else:
             return
 
-    async def deactive(self, hme:str) -> None:
+    async def delete(self, hmes: List[str]) -> None:
+        tasks = []
+        for hme in hmes:
+            task = asyncio.ensure_future(self._delete_one(hme))
+            tasks.append(task)
+        await asyncio.gather(*tasks)
+
+    async def _deactive_one(self, hme:str) -> None:
+        hme = hme.strip()
         anonymousId = await self._get_anonymousid(hme)
         if anonymousId is not None:            
             gen_res = await self.deactivate_email(anonymousId)
@@ -235,14 +245,25 @@ class RichHideMyEmail(HideMyEmail):
                 elif type(error) == dict and "errorMessage" in error:
                     err_msg = error["errorMessage"]
                     self.console.log(
-                    f"[bold red][ERR][/] - Failed to deactivate email. Reason: {err_msg}"
+                    f"[bold red][ERR][/]"
+                    f"- Failed to deactivate email [italic][red]{hme}[/][/]. "
+                    f"Reason: {err_msg}"
                     )
+
                 return
             self.console.log(f"Email: [italic][bright_blue]{hme}[/][/] disabled for forwarding!")
         else:
             return
+
+    async def deactivate(self, hmes: List[str]) -> None:
+        tasks = []
+        for hme in hmes:
+            task = asyncio.ensure_future(self._deactive_one(hme))
+            tasks.append(task)
+        await asyncio.gather(*tasks)
     
-    async def reactive(self, hme:str) -> None:
+    async def _reactive_one(self, hme:str) -> None:
+        hme = hme.strip()
         anonymousId = await self._get_anonymousid(hme)
         if anonymousId is not None:            
             gen_res = await self.reactivate_email(anonymousId)
@@ -256,12 +277,22 @@ class RichHideMyEmail(HideMyEmail):
                 elif type(error) == dict and "errorMessage" in error:
                     err_msg = error["errorMessage"]
                     self.console.log(
-                    f"[bold red][ERR][/] - Failed to reactivate email. Reason: {err_msg}"
+                    f"[bold red][ERR][/]"
+                    f"- Failed to reactivate email [italic][red]{hme}[/][/]. "
+                    f"Reason: {err_msg}"
                     )
-                return
+                    return
             self.console.log(f"Email: [italic][bright_blue]{hme}[/][/] enabled for forwarding!")
         else:
             return
+        
+    async def reactivate(self, hmes: List[str]) -> None:
+        tasks = []
+        for hme in hmes:
+            task = asyncio.ensure_future(self._reactive_one(hme))
+            tasks.append(task)
+        await asyncio.gather(*tasks)
+
 
 
 async def generate(count: Optional[int], label:Optional[str], notes: Optional[str]) -> None:
@@ -272,17 +303,17 @@ async def list(active: bool, search: str, label: Optional[str], notes: Optional[
     async with RichHideMyEmail(label, notes) as hme:
         await hme.list(active, search)
 
-async def delete(email: str) -> None:
+async def delete(email: List[str]) -> None:
     async with RichHideMyEmail("","") as hme:
         await hme.delete(email)
 
-async def deactivate(email: str) -> None:
+async def deactivate(email: List[str]) -> None:
     async with RichHideMyEmail("","") as hme:
-        await hme.deactive(email)
+        await hme.deactivate(email)
 
-async def reactivate(email: str) -> None:
+async def reactivate(email: List[str]) -> None:
     async with RichHideMyEmail("","") as hme:
-        await hme.reactive(email)
+        await hme.reactivate(email)
 
 def _get_cookies_from_browser(browser: str, domain: str) -> List[dict]:
     browser_map = {"safari": safari,
