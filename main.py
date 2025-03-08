@@ -137,7 +137,7 @@ class RichHideMyEmail(HideMyEmail):
             elif type(error) == dict and "errorMessage" in error:
                 err_msg = error["errorMessage"]
             self.console.log(
-                f"[bold red][ERR][/] - Failed to generate email. Reason: {err_msg}"
+                f"[bold red][ERR][/] - Failed to list email. Reason: {err_msg}"
             )
             return
 
@@ -182,7 +182,7 @@ class RichHideMyEmail(HideMyEmail):
             elif type(error) == dict and "errorMessage" in error:
                 err_msg = error["errorMessage"]
             self.console.log(
-                f"[bold red][ERR][/] - Failed to generate email. Reason: {err_msg}"
+                f"[bold red][ERR][/] - Failed to get [italic]anonymousId[/] email. Reason: {err_msg}"
             )
             return
         try:
