@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import asyncio
 import click
-from main import generate, list, delete, deactivate, reactivate, cookie_writer
+from main import generate, list, delete, deactivate, reactivate
+from cookies import CookiesManager
 
 @click.group()
 def cli():
@@ -86,8 +87,6 @@ def reactivatecommand(emails, file):
     else:
         click.echo('No emails provided.')
 
-
-
 @click.command()
 @click.option(
                 "--browser",
@@ -97,7 +96,8 @@ def reactivatecommand(emails, file):
                 case_sensitive=False))
 def extract_cookies(browser: str):
     "To extract cookies from browser(Chrome, Safari and Firefox)"
-    cookie_writer(browser)
+    cookies  = CookiesManager()
+    cookies.cookie_writer(browser)
 
 cli.add_command(listcommand, name="list")
 cli.add_command(generatecommand, name="generate")
@@ -115,3 +115,5 @@ if __name__ == "__main__":
         loop.run_until_complete(generate(None, label="", notes=""))
     except KeyboardInterrupt:
         pass
+    finally:
+        loop.close()
