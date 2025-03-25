@@ -90,12 +90,12 @@ def reactivatecommand(emails, file):
 @click.command()
 @click.option(
                 "--browser",
-                default='safari', 
+                default='chrome', 
                 required = False, 
-                type=click.Choice(['chrome','safari','firefox'],
+                type=click.Choice(['chrome','safari','firefox','internet_explorer'],
                 case_sensitive=False))
 def extract_cookies(browser: str):
-    "To extract cookies from browser(Chrome, Safari and Firefox)"
+    "To extract cookies from browser(Chrome, Safari, Firefox and IE)"
     cookies  = CookiesManager()
     cookies.cookie_writer(browser)
 
