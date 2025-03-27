@@ -55,14 +55,20 @@ class RichHideMyEmail(HideMyEmail):
         gen_res = await self.generate_email()
         if not gen_res:
             await self._log_email_error(gen_res, action_name="get", target="generate")
-        email = gen_res["result"]["hme"]
-        self.console.log(f'[50%] "{email}" - Successfully generated')
-        # Then, reserve it
-        reserve_res = await self.reserve_email(email)
-        if not reserve_res:
-            await self._log_email_error(reserve_res, action_name="get", target="reserve") 
-        self.console.log(f'[100%] "{email}" - Successfully reserved')
-        return email
+        try:
+            email = gen_res["result"]["hme"]
+            self.console.log(f'[50%] "{email}" - Successfully generated')
+            # Then, reserve it
+            reserve_res = await self.reserve_email(email)
+            if not reserve_res:
+                await self._log_email_error(reserve_res, action_name="get", target="reserve") 
+            self.console.log(f'[100%] "{email}" - Successfully reserved')
+            return email
+        except KeyError:
+            self.console.log(
+            f"[bold yellow][WARN][/] Make sure"
+            f"[yellow][italic] cookie.txt[/][/] is up to date"
+            )
 
     async def _generate(self, num: int):
         tasks = []
@@ -113,8 +119,9 @@ class RichHideMyEmail(HideMyEmail):
         self.table.add_column("Hide my email", no_wrap=True)
         self.table.add_column("Created Date Time")
         self.table.add_column("IsActive")
-        for row in gen_res["result"]["hmeEmails"]:
-            if search is not None and re.search(search, row["label"], flags=re.IGNORECASE):
+        try:
+            for row in gen_res["result"]["hmeEmails"]:
+                if search is not None and re.search(search, row["label"], flags=re.IGNORECASE):
                     raw_time =datetime.datetime.fromtimestamp(row["createTimestamp"] / 1000) 
                     self.table.add_row(
                         row["label"],
@@ -123,7 +130,7 @@ class RichHideMyEmail(HideMyEmail):
                         str(raw_time.replace(microsecond=0)),
                         str(row["isActive"]),
                     )
-            if row["isActive"] == active and search is None:
+                if row["isActive"] == active and search is None:
                     raw_time =datetime.datetime.fromtimestamp(row["createTimestamp"] / 1000)
                     self.table.add_row(
                         row["label"],
@@ -132,7 +139,12 @@ class RichHideMyEmail(HideMyEmail):
                         str(raw_time.replace(microsecond=0)),
                         str(row["isActive"]),
                     )
-        self.console.print(self.table)
+            self.console.print(self.table)
+        except KeyError:
+            self.console.log(
+            f"[bold yellow][WARN][/] Make sure"
+            f"[yellow][italic] cookie.txt[/][/] is up to date"
+            )
               
     async def _get_anonymousid(self, hme:str) -> Optional[str]:
         # anonymousid needed as payload for delete, deactivate, reactivate endpoints
