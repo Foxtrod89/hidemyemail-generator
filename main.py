@@ -10,11 +10,13 @@ from rich.table import Table
 from rich.box import MINIMAL_HEAVY_HEAD
 from icloud import HideMyEmail
 
+
 MAX_CONCURRENT_TASKS = 5
+COOKIE_ENVVAR = "HME_COOKIE_ENVVAR"
 
 
 class RichHideMyEmail(HideMyEmail):
-    _cookie_file = "cookie.txt"
+    _cookie_file = os.getenv(COOKIE_ENVVAR, "cookie.txt")
 
     def __init__(self, label:Optional[str], notes: Optional[str]):
         super().__init__(label=label, notes=notes)
