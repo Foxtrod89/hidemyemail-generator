@@ -4,21 +4,24 @@ import click
 from main import generate, list, delete, deactivate, reactivate
 from cookies import CookiesManager
 
+
 @click.group()
 def cli():
     pass
+
 
 @click.command()
 @click.option("--count", default=1, help="How many emails to generate", type=int)
 @click.option("--label", required=True, help="To set custom label")
 @click.option("--notes", required=False, help="To set custom notes")
-def generatecommand(count: int, label:str, notes: str):
+def generatecommand(count: int, label: str, notes: str):
     "Generate emails"
     loop = asyncio.new_event_loop()
     try:
         loop.run_until_complete(generate(count, label, notes))
     except KeyboardInterrupt:
         pass
+
 
 @click.command()
 @click.option(
@@ -33,9 +36,10 @@ def listcommand(active, search):
     except KeyboardInterrupt:
         pass
 
+
 @click.command()
 @click.argument("emails", nargs=-1)
-@click.option('--file', type=click.File('r'), help="to delete emails from file")
+@click.option("--file", type=click.File("r"), help="to delete emails from file")
 def deletecommand(emails, file):
     "Remove emails"
     if emails:
@@ -45,15 +49,16 @@ def deletecommand(emails, file):
             pass
     elif file:
         try:
-           asyncio.run(delete(file))
+            asyncio.run(delete(file))
         except KeyboardInterrupt:
             pass
     else:
-        click.echo('No emails provided.')
+        click.echo("No emails provided.")
+
 
 @click.command()
 @click.argument("emails", nargs=-1)
-@click.option('--file', type=click.File('r'), help="to deactivate emails from file")
+@click.option("--file", type=click.File("r"), help="to deactivate emails from file")
 def deactivatecommand(emails, file):
     "Deactivate emails"
     if emails:
@@ -63,15 +68,16 @@ def deactivatecommand(emails, file):
             pass
     elif file:
         try:
-           asyncio.run(deactivate(file))
+            asyncio.run(deactivate(file))
         except KeyboardInterrupt:
             pass
     else:
-        click.echo('No emails provided.')
+        click.echo("No emails provided.")
+
 
 @click.command()
 @click.argument("emails", nargs=-1)
-@click.option('--file', type=click.File('r'), help="to reactivate emails from file")
+@click.option("--file", type=click.File("r"), help="to reactivate emails from file")
 def reactivatecommand(emails, file):
     "Reactivate emails"
     if emails:
@@ -81,29 +87,33 @@ def reactivatecommand(emails, file):
             pass
     elif file:
         try:
-           asyncio.run(reactivate(file))
+            asyncio.run(reactivate(file))
         except KeyboardInterrupt:
             pass
     else:
-        click.echo('No emails provided.')
+        click.echo("No emails provided.")
+
 
 @click.command()
 @click.option(
-                "--browser",
-                default='chrome', 
-                required = False, 
-                type=click.Choice(['chrome','safari','firefox','internet_explorer'],
-                case_sensitive=False))
+    "--browser",
+    default="chrome",
+    required=False,
+    type=click.Choice(
+        ["chrome", "safari", "firefox", "internet_explorer"], case_sensitive=False
+    ),
+)
 def extract_cookies(browser: str):
     "To extract cookies from browser(Chrome, Safari, Firefox and IE)"
-    cookies  = CookiesManager()
+    cookies = CookiesManager()
     cookies.cookie_writer(browser)
+
 
 cli.add_command(listcommand, name="list")
 cli.add_command(generatecommand, name="generate")
-cli.add_command(deletecommand, name = "delete")
-cli.add_command(deactivatecommand, name = "deactivate")
-cli.add_command(reactivatecommand, name = "reactivate")
+cli.add_command(deletecommand, name="delete")
+cli.add_command(deactivatecommand, name="deactivate")
+cli.add_command(reactivatecommand, name="reactivate")
 cli.add_command(extract_cookies, name="extract")
 
 if __name__ == "__main__":

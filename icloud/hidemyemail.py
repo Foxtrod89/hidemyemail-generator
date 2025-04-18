@@ -12,7 +12,7 @@ class HideMyEmail:
         "clientBuildNumber": "2413Project28",
         "clientMasteringNumber": "2413B20",
         "clientId": "",
-        "dsid": "", # Directory Services Identifier (DSID) is a method of identifying AppleID accounts
+        "dsid": "",  # Directory Services Identifier (DSID) is a method of identifying AppleID accounts
     }
 
     def __init__(self, label: Optional[str], notes: Optional[str], cookies: str = ""):
@@ -31,7 +31,9 @@ class HideMyEmail:
         self.cookies = cookies
 
     async def __aenter__(self):
-        connector = aiohttp.TCPConnector(ssl_context=ssl.create_default_context(cafile=certifi.where())) 
+        connector = aiohttp.TCPConnector(
+            ssl_context=ssl.create_default_context(cafile=certifi.where())
+        )
         self.s = aiohttp.ClientSession(
             headers={
                 "Connection": "keep-alive",
@@ -71,7 +73,9 @@ class HideMyEmail:
         """Generates an email"""
         try:
             async with self.s.post(
-                f"{self.base_url_v1}/generate", params=self.params, json={"langCode": "en-us"}
+                f"{self.base_url_v1}/generate",
+                params=self.params,
+                json={"langCode": "en-us"},
             ) as resp:
                 res = await resp.json()
                 return res
@@ -101,20 +105,24 @@ class HideMyEmail:
     async def list_email(self) -> dict:
         """List all HME"""
         try:
-            async with self.s.get(f"{self.base_url_v2}/list", params=self.params) as resp:
+            async with self.s.get(
+                f"{self.base_url_v2}/list", params=self.params
+            ) as resp:
                 res = await resp.json()
                 return res
         except asyncio.TimeoutError:
             return {"error": 1, "reason": "Request timed out"}
         except Exception as e:
             return {"error": 1, "reason": str(e)}
-    
-    
+
     async def delete_email(self, anonymousId: str) -> dict:
         """Delete email"""
         try:
             async with self.s.post(
-                f"{self.base_url_v1}/delete", params=self.params, json={"anonymousId": anonymousId}) as resp:
+                f"{self.base_url_v1}/delete",
+                params=self.params,
+                json={"anonymousId": anonymousId},
+            ) as resp:
                 res = await resp.json()
                 return res
         except asyncio.TimeoutError:
@@ -126,7 +134,10 @@ class HideMyEmail:
         """Deactivate emails for forwarding"""
         try:
             async with self.s.post(
-                f"{self.base_url_v1}/deactivate", params=self.params, json={"anonymousId": anonymousId}) as resp:
+                f"{self.base_url_v1}/deactivate",
+                params=self.params,
+                json={"anonymousId": anonymousId},
+            ) as resp:
                 res = await resp.json()
                 return res
         except asyncio.TimeoutError:
@@ -138,13 +149,13 @@ class HideMyEmail:
         """Reactivate emails for forwarding"""
         try:
             async with self.s.post(
-                f"{self.base_url_v1}/reactivate", params=self.params, json={"anonymousId": anonymousId}) as resp:
+                f"{self.base_url_v1}/reactivate",
+                params=self.params,
+                json={"anonymousId": anonymousId},
+            ) as resp:
                 res = await resp.json()
                 return res
         except asyncio.TimeoutError:
             return {"error": 1, "reason": "Request timed out"}
         except Exception as e:
             return {"error": 1, "reason": str(e)}
-
-
-

@@ -18,12 +18,13 @@ COOKIE_ENVVAR = "HME_COOKIE_ENVVAR"
 class RichHideMyEmail(HideMyEmail):
     _cookie_file = os.getenv(COOKIE_ENVVAR, "cookie.txt")
 
-    def __init__(self, label:Optional[str], notes: Optional[str]):
+    def __init__(self, label: Optional[str], notes: Optional[str]):
         super().__init__(label=label, notes=notes)
         self.console = Console()
-        self.table = Table(box=MINIMAL_HEAVY_HEAD,
-                           padding=(0,0,1,0), # top, right, bottom, and left borders
-                        )
+        self.table = Table(
+            box=MINIMAL_HEAVY_HEAD,
+            padding=(0, 0, 1, 0),  # top, right, bottom, and left borders
+        )
 
         if os.path.exists(self._cookie_file) and os.path.getsize(self._cookie_file) > 1:
             # load in a cookie string from file
@@ -34,23 +35,27 @@ class RichHideMyEmail(HideMyEmail):
                 '[bold yellow][WARN][/] No "cookie.txt" file found OR file maybe empty! Generation will not work due to unauthorized access'
             )
             exit(1)
-    
+
     async def _log_email_error(
-            self,
-            gen_res: Optional[dict],
-            hme: str="",
-            action_name: str="",
-            target: str= "email"
-            ) -> None:
+        self,
+        gen_res: Optional[dict],
+        hme: str = "",
+        action_name: str = "",
+        target: str = "email",
+    ) -> None:
         if not gen_res:
             return
         error = gen_res.get("error", {})
-        err_msg = gen_res.get("reason", "Unknown") if isinstance(error, int) else error.get("errorMessage", "Unknown")
+        err_msg = (
+            gen_res.get("reason", "Unknown")
+            if isinstance(error, int)
+            else error.get("errorMessage", "Unknown")
+        )
         self.console.log(
-        f"[bold red][ERR][/]"
-        f"- Failed to {action_name} [italic]{target}[/] for [italic][red]{hme}[/][/]. "
-        f"Reason: {err_msg}"
-    )
+            f"[bold red][ERR][/]"
+            f"- Failed to {action_name} [italic]{target}[/] for [italic][red]{hme}[/][/]. "
+            f"Reason: {err_msg}"
+        )
 
     async def _generate_one(self) -> Optional[str]:
         # First, generate an email
@@ -63,13 +68,15 @@ class RichHideMyEmail(HideMyEmail):
             # Then, reserve it
             reserve_res = await self.reserve_email(email)
             if not reserve_res:
-                await self._log_email_error(reserve_res, action_name="get", target="reserve") 
+                await self._log_email_error(
+                    reserve_res, action_name="get", target="reserve"
+                )
             self.console.log(f'[100%] "{email}" - Successfully reserved')
             return email
         except KeyError:
             self.console.log(
-            f"[bold yellow][WARN][/] Make sure"
-            f"[yellow][italic] cookie.txt[/][/] is up to date"
+                "[bold yellow][WARN][/] Make sure"
+                "[yellow][italic] cookie.txt[/][/] is up to date"
             )
 
     async def _generate(self, num: int):
@@ -91,7 +98,7 @@ class RichHideMyEmail(HideMyEmail):
                 count = int(s)
             self.console.log(f"Generating {count} email(s)...")
             self.console.rule()
-            with self.console.status(f"[bold green]Generating iCloud email(s)..."):
+            with self.console.status("[bold green]Generating iCloud email(s)..."):
                 while count > 0:
                     batch = await self._generate(
                         count if count < MAX_CONCURRENT_TASKS else MAX_CONCURRENT_TASKS
@@ -103,7 +110,7 @@ class RichHideMyEmail(HideMyEmail):
                     f.write(os.linesep.join(emails) + os.linesep)
                 self.console.rule()
                 self.console.log(
-                    f':star: Emails have been saved into the "emails.txt" file'
+                    ':star: Emails have been saved into the "emails.txt" file'
                 )
                 self.console.log(
                     f"[bold green]All done![/] Successfully generated [bold green]{len(emails)}[/] email(s)"
@@ -123,8 +130,12 @@ class RichHideMyEmail(HideMyEmail):
         self.table.add_column("IsActive")
         try:
             for row in gen_res["result"]["hmeEmails"]:
-                if search is not None and re.search(search, row["label"], flags=re.IGNORECASE):
-                    raw_time =datetime.datetime.fromtimestamp(row["createTimestamp"] / 1000) 
+                if search is not None and re.search(
+                    search, row["label"], flags=re.IGNORECASE
+                ):
+                    raw_time = datetime.datetime.fromtimestamp(
+                        row["createTimestamp"] / 1000
+                    )
                     self.table.add_row(
                         row["label"],
                         row["note"],
@@ -133,7 +144,9 @@ class RichHideMyEmail(HideMyEmail):
                         str(row["isActive"]),
                     )
                 if row["isActive"] == active and search is None:
-                    raw_time =datetime.datetime.fromtimestamp(row["createTimestamp"] / 1000)
+                    raw_time = datetime.datetime.fromtimestamp(
+                        row["createTimestamp"] / 1000
+                    )
                     self.table.add_row(
                         row["label"],
                         row["note"],
@@ -144,34 +157,36 @@ class RichHideMyEmail(HideMyEmail):
             self.console.print(self.table)
         except KeyError:
             self.console.log(
-            f"[bold yellow][WARN][/] Make sure"
-            f"[yellow][italic] cookie.txt[/][/] is up to date"
+                "[bold yellow][WARN][/] Make sure"
+                "[yellow][italic] cookie.txt[/][/] is up to date"
             )
-              
-    async def _get_anonymousid(self, hme:str) -> Optional[str]:
+
+    async def _get_anonymousid(self, hme: str) -> Optional[str]:
         # anonymousid needed as payload for delete, deactivate, reactivate endpoints
         gen_res = await self.list_email()
         if not gen_res:
-            await self._log_email_error(gen_res, hme, action_name="get", target="anonymousId")
+            await self._log_email_error(
+                gen_res, hme, action_name="get", target="anonymousId"
+            )
         try:
             for row in gen_res["result"]["hmeEmails"]:
-                if row.get('hme') == hme:
-                    return row.get('anonymousId')
+                if row.get("hme") == hme:
+                    return row.get("anonymousId")
             self.console.log(
-                             f"[bold red][ERR][/] - No [italic][green]anonymousId[/][/] "
-                             f"found for [italic][green]{hme}[/][/], "
-                             f"make sure email exist!"
-                             )
+                f"[bold red][ERR][/] - No [italic][green]anonymousId[/][/] "
+                f"found for [italic][green]{hme}[/][/], "
+                f"make sure email exist!"
+            )
             return None
         except KeyError as e:
             self.console.log(f"[bold red][ERR][/] - KeyError: {str(e)}.")
         return None
 
     async def _handle_email_action(
-    self, 
-    hme: str, 
-    action_func: Callable[[str], Awaitable[Optional[dict]]], 
-    action_name: str
+        self,
+        hme: str,
+        action_func: Callable[[str], Awaitable[Optional[dict]]],
+        action_name: str,
     ) -> None:
         """Generic function"""
         hme = hme.strip()
@@ -181,49 +196,63 @@ class RichHideMyEmail(HideMyEmail):
         gen_res = await action_func(anonymous_id)
         if not gen_res or not gen_res.get("success"):
             await self._log_email_error(gen_res, hme, action_name)
-            return 
-        self.console.log(f"Email: [italic][bright_blue]{hme}[/][/] was successfully {action_name}")
-    
+            return
+        self.console.log(
+            f"Email: [italic][bright_blue]{hme}[/][/] was successfully {action_name}"
+        )
+
     async def _delete_one(self, hme: str) -> None:
-            await self._handle_email_action(hme, self.delete_email, "delete")
+        await self._handle_email_action(hme, self.delete_email, "delete")
 
     async def delete(self, hmes: List[str]) -> None:
-            tasks = [asyncio.create_task(self._delete_one(hme)) for hme in hmes]
-            await asyncio.gather(*tasks)
+        tasks = [asyncio.create_task(self._delete_one(hme)) for hme in hmes]
+        await asyncio.gather(*tasks)
 
     async def _deactivate_one(self, hme: str) -> None:
-        await self._handle_email_action(hme, self.deactivate_email, "disable for forwarding")
+        await self._handle_email_action(
+            hme, self.deactivate_email, "disable for forwarding"
+        )
 
     async def deactivate(self, hmes: List[str]) -> None:
-        tasks = [asyncio.create_task(self._deactivate_one(hme)) for hme in hmes]    
+        tasks = [asyncio.create_task(self._deactivate_one(hme)) for hme in hmes]
         await asyncio.gather(*tasks)
-    
+
     async def _reactivate_one(self, hme: str) -> None:
-        await self._handle_email_action(hme, self.reactivate_email, "enable for forwarding")
-        
+        await self._handle_email_action(
+            hme, self.reactivate_email, "enable for forwarding"
+        )
+
     async def reactivate(self, hmes: List[str]) -> None:
         tasks = [asyncio.create_task(self._reactivate_one(hme)) for hme in hmes]
         await asyncio.gather(*tasks)
 
 
-async def generate(count: Optional[int], label:Optional[str], notes: Optional[str]) -> None:
+async def generate(
+    count: Optional[int], label: Optional[str], notes: Optional[str]
+) -> None:
     async with RichHideMyEmail(label, notes) as hme:
         await hme.generate(count)
 
-async def list(active: bool, search: str, label: Optional[str], notes: Optional[str]) -> None:
+
+async def list(
+    active: bool, search: str, label: Optional[str], notes: Optional[str]
+) -> None:
     async with RichHideMyEmail(label, notes) as hme:
         await hme.list(active, search)
 
+
 async def delete(email: List[str]) -> None:
-    async with RichHideMyEmail("","") as hme:
+    async with RichHideMyEmail("", "") as hme:
         await hme.delete(email)
 
+
 async def deactivate(email: List[str]) -> None:
-    async with RichHideMyEmail("","") as hme:
+    async with RichHideMyEmail("", "") as hme:
         await hme.deactivate(email)
 
+
 async def reactivate(email: List[str]) -> None:
-    async with RichHideMyEmail("","") as hme:
+    async with RichHideMyEmail("", "") as hme:
         await hme.reactivate(email)
 
 
